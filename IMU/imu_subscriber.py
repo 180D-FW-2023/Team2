@@ -12,14 +12,14 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe('IMU/instruction', qos=1)
     global connection_status
     connection_status = True
-    print("Connection returned result: "+str(rc))
+    print("Connection returned result from IMU subscriber: "+str(rc))
     
 # The callback of the client when it disconnects.
 def on_disconnect(client, userdata, rc):
     if rc != 0:
-        print('Unexpected Disconnect')
+        print('Unexpected disconnect from IMU subscriber')
     else:
-        print('Expected Disconnect')
+        print('Expected disconnect from IMU subscriber')
 
 # The default message callback.
 # (you can create separate callbacks per subscribed topic)
