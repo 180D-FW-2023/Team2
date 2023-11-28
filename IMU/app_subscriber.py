@@ -1,6 +1,8 @@
 import paho.mqtt.client as mqtt
 import sys
 
+SUCCESS_MESSAGE = "Success"
+
 client = None
 distance = 0.0
 connection_status = False
@@ -13,14 +15,14 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe('IMU/distance', qos=1)
     global connection_status
     connection_status = True
-    print("Connection returned result: "+str(rc))
+    print("Connection returned result from app subscriber: "+str(rc))
     
 # The callback of the client when it disconnects.
 def on_disconnect(client, userdata, rc):
     if rc != 0:
-        print('Unexpected Disconnect')
+        print('Unexpected disconnect from app subscriber')
     else:
-        print('Expected Disconnect')
+        print('Expected disconnect from app subscriber')
 
 # The default message callback.
 # (you can create separate callbacks per subscribed topic)
@@ -46,14 +48,16 @@ def app_client_initialize():
     client.connect_async('test.mosquitto.org')
     client.loop_start()
 
-    return True
+    return True, SUCCESS_MESSAGE
 
 def app_disconnect():
     client.loop_stop()
     client.disconnect()
+    return True, SUCCESS_MESSAGE
 
 def app_collect_data():
+    global distance_update_status
     while distance_update_status == 0:
         continue
     distance_update_status = 1
-    return distance
+    return distance, SUCCESS_MESSAGE
