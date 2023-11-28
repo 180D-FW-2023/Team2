@@ -1,18 +1,21 @@
 import paho.mqtt.client as mqtt
 
+IMU_COMMUNICATION_TIMEOUT = 5.0
+SUCCESS_MESSAGE = "Success"
+
 client = None
 
 # 0. define callbacks - functions that run when events happen.
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
-    print("Connection returned result: "+str(rc))
+    print("Connection returned result from app publisher: "+str(rc))
 
 # The callback of the client when it disconnects.
 def on_disconnect(client, userdata, rc):
     if rc != 0:
-        print('Unexpected Disconnect')
+        print('Unexpected disconnect from app publisher:')
     else:
-        print('Expected Disconnect')
+        print('Expected disconnect from app publisher:')
 
 # The default message callback.
 # (you can create separate callbacks per subscribed topic)
@@ -33,21 +36,26 @@ def app_client_initialize():
     client.on_message = on_message
     # 2. connect to a broker using one of the connect*() functions.
     client.connect_async('test.mosquitto.org')
-    return True
+    return True, SUCCESS_MESSAGE
 
 def app_publish_data(data):
     global client
     if client is None:
-        return False
+        return False, "IMU: publisher client is None"
     # 3. call one of the loop*() functions to maintain network traffic flow with the broker.
     client.loop_start()
-    client.publish('IMU/instruction', data, qos=1)
+    info = client.publish('IMU/instruction', data, qos=1)
+    while not info.is_published():
+        try:
+            info.wait_for_publish(IMU_COMMUNICATION_TIMEOUT)
+        except ValueError or RuntimeError:
+            return False, "App: publisher failed to publish data"
     client.loop_stop()
     # use disconnect() to disconnect from the broker.
     # client.disconnect()
-    return True
+    return True, SUCCESS_MESSAGE
 
 def app_disconnect():
     global client
     client.disconnect()
-    return True
+    return True, SUCCESS_MESSAGE
