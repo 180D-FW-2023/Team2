@@ -211,8 +211,11 @@ while True:
 
     if imu_subscriber.get_imu_publish_instruction() == 1:
         imu_subscriber.reset_imu_publish_instruction()
-        imu_publisher.imu_publish_data(distance)
-        print("Data published")
+        publish_result, message = imu_publisher.imu_publish_data(distance)
+        if not publish_result:
+            print(message)
+        else:
+            print("Data published")
 
     #slow program down a bit, makes the output more readable
     time.sleep(0.03)

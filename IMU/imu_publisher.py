@@ -1,5 +1,8 @@
 import paho.mqtt.client as mqtt
 
+IMU_COMMUNICATION_TIMEOUT = 5.0
+SUCCESS_MESSAGE = "Success"
+
 client = None
 
 # 0. define callbacks - functions that run when events happen.
@@ -33,21 +36,26 @@ def imu_client_initialize():
     client.on_message = on_message
     # 2. connect to a broker using one of the connect*() functions.
     client.connect_async('test.mosquitto.org')
-    return True
+    return True, ""
 
 def imu_publish_data(data):
     global client
     if client is None:
-        return False
-    # 3. call one of the loop*() functions to maintain network traffic flow with the broker.
+        return False, "IMU: publisher client is None"
+    
+    # publish imu data to the broker
     client.loop_start()
-    client.publish('IMU/distance', data, qos=1)
+    info = client.publish('IMU/distance', data, qos=1)
+    while not info.is_published():
+        try:
+            info.wait_for_publish(IMU_COMMUNICATION_TIMEOUT)
+        except ValueError or RuntimeError:
+            return False, "IMU: publisher failed to publish data"
     client.loop_stop()
-    # use disconnect() to disconnect from the broker.
-    # client.disconnect()
-    return True
+
+    return True, SUCCESS_MESSAGE
 
 def imu_client_disconnect():
     global client
     client.disconnect()
-    return True
+    return True, SUCCESS_MESSAGE
