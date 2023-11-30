@@ -22,5 +22,7 @@ def get_imu_distance():
     app_publish_data_success, message = app_publisher.app_publish_data(1)
     if not app_publish_data_success:
         return 0, app_publish_data_success, message
-    distance = app_subscriber.app_collect_data()
+    distance, ack_message = app_subscriber.app_collect_data()
+    if distance == -1:
+        return -1, False, ack_message
     return distance, app_publish_data_success, message

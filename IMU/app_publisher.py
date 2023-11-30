@@ -45,11 +45,11 @@ def app_publish_data(data):
     # 3. call one of the loop*() functions to maintain network traffic flow with the broker.
     client.loop_start()
     info = client.publish('IMU/instruction', data, qos=1)
-    while not info.is_published():
-        try:
-            info.wait_for_publish(IMU_COMMUNICATION_TIMEOUT)
-        except ValueError or RuntimeError:
-            return False, "App: publisher failed to publish data"
+    # while not info.is_published():
+    #     try:
+    #         info.wait_for_publish(IMU_COMMUNICATION_TIMEOUT)
+    #     except ValueError or RuntimeError:
+    #         return False, "App: publisher failed to publish data"
     client.loop_stop()
     # use disconnect() to disconnect from the broker.
     # client.disconnect()

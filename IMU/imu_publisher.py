@@ -46,11 +46,11 @@ def imu_publish_data(data):
     # publish imu data to the broker
     client.loop_start()
     info = client.publish('IMU/distance', data, qos=1)
-    while not info.is_published():
-        try:
-            info.wait_for_publish(IMU_COMMUNICATION_TIMEOUT)
-        except ValueError or RuntimeError:
-            return False, "IMU: publisher failed to publish data"
+    # while not info.is_published():
+    #     try:
+    #         info.wait_for_publish(IMU_COMMUNICATION_TIMEOUT)
+    #     except ValueError or RuntimeError:
+    #         return False, "IMU: publisher failed to publish data"
     client.loop_stop()
 
     return True, SUCCESS_MESSAGE

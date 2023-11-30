@@ -1,10 +1,10 @@
 import paho.mqtt.client as mqtt
-import sys
+import time
 
 SUCCESS_MESSAGE = "Success"
 
 client = None
-distance = 0.0
+distance = "0.0"
 connection_status = False
 distance_update_status = 0
 
@@ -30,7 +30,7 @@ def on_message(client, userdata, message):
     print('Received message: "' + str(message.payload) + '" on topic "' +
         message.topic + '" with QoS ' + str(message.qos))
     global distance, distance_update_status
-    distance = str(message.payload) 
+    distance = str(message.payload.decode("utf-8"))
     distance_update_status = 1
 
 def app_client_initialize():
@@ -57,7 +57,12 @@ def app_disconnect():
 
 def app_collect_data():
     global distance_update_status
-    while distance_update_status == 0:
+    start_time = time.time()
+    elapsed_time = 0.0
+    while distance_update_status == 0 and elapsed_time <= 5.0:
+        elapsed_time = time.time() - start_time
         continue
-    distance_update_status = 1
+    if distance_update_status == 0 and elapsed_time > 5.0:
+        return -1, "Time out for imu connection" 
+    distance_update_status = 0
     return distance, SUCCESS_MESSAGE
