@@ -1,11 +1,20 @@
 import tkinter as tk
+import sys
+sys.path.append('../')
+sys.path.append('../IMU')
 from time import strftime, localtime
 
+from IMU import imu_communication_apis
+
 class AIPetUserInterface:
-    display_string = "Hello world!"  # Your initial string content
+    default_display_string = "Welcome to AIPet!"  # Your initial string content
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("AIPet Monitor")
+
+        # communication protocols initialize
+        if not self.initialize_imu_communication():
+            sys.exit()
 
         # Setting window size to 800x600
         self.root.geometry("800x600")
@@ -16,7 +25,7 @@ class AIPetUserInterface:
 
         # Text display box
         self.text_display = tk.Text(self.root, height=8, width=50, font=("Helvetica", 20))
-        self.text_display.insert(tk.END, self.display_string)  # Display the initial string
+        self.text_display.insert(tk.END, self.default_display_string)  # Display the initial string
         self.text_display.config(state='disabled')  # Disable editing
         self.text_display.place(relx=0.5, rely=0.4, anchor=tk.CENTER)  # Centering the text box
 
@@ -29,6 +38,13 @@ class AIPetUserInterface:
                                              width=30, height=2)
         self.get_distance_button.place(relx=0.25, rely=0.7, anchor=tk.CENTER)  # Placing the button below the text box
 
+    def initialize_imu_communication(self):
+        if not imu_communication_apis.initialize_app_publisher():   
+            return False
+        if not imu_communication_apis.initialize_app_subscriber():
+            return False
+        return True
+
     def update_time(self):
         current_time = strftime('%m/%d/%Y %H:%M', localtime())
         self.time_label.config(text=current_time)
@@ -39,10 +55,16 @@ class AIPetUserInterface:
         self.root.mainloop()
     
     def get_imu_distance(self):
-        self.display_string = "New content here!"  # Replace this with the new text you want to display
+        distance, ack, message = imu_communication_apis.get_imu_distance()
+        if not ack:
+            print("App: get distance error " + message)
+            return
+        distance = float(distance)
+        distance = "{:.{}f}".format(distance, 2)
+        display_string = f"Your pet has traveled {distance} meters in the past 24 hours."
         self.text_display.config(state='normal')  # Enable editing to change the text
         self.text_display.delete(1.0, tk.END)  # Clear existing content in the text box
-        self.text_display.insert(tk.END, self.display_string)  # Insert the new text
+        self.text_display.insert(tk.END, display_string)  # Insert the new text
         self.text_display.config(state='disabled')  # Disable editing after updating
 
 
