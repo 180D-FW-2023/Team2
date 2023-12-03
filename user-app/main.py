@@ -1,5 +1,6 @@
 import tkinter as tk
 import sys
+import webbrowser
 sys.path.append('../')
 sys.path.append('../IMU')
 from time import strftime, localtime
@@ -34,9 +35,19 @@ class AIPetUserInterface:
         self.time_label.place(relx=1.0, rely=0.0, anchor=tk.NE, x=-10, y=10)  # Placing time label in upper right corner
 
         # Button for getting pet travel distance
-        self.get_distance_button = tk.Button(self.root, text="Get Pet Travel Distance", command=self.get_imu_distance, 
+        self.get_distance_button = tk.Button(self.root, text="Generate Activity Report", command=self.generate_report, 
                                              width=30, height=2)
         self.get_distance_button.place(relx=0.25, rely=0.7, anchor=tk.CENTER)  # Placing the button below the text box
+
+        # Button for living streaming (main)
+        self.get_distance_button = tk.Button(self.root, text="Living Stream (Main Camera)", command=self.live_stream, 
+                                             width=30, height=2)
+        self.get_distance_button.place(relx=0.75, rely=0.7, anchor=tk.CENTER)  # Placing the button below the text box
+
+        # Button for living streaming (sub)
+        self.get_distance_button = tk.Button(self.root, text="Living Stream (Sub Camera)", command=self.live_stream, 
+                                             width=30, height=2)
+        self.get_distance_button.place(relx=0.25, rely=0.8, anchor=tk.CENTER)  # Placing the button below the text box
 
     def initialize_imu_communication(self):
         if not imu_communication_apis.initialize_app_publisher():   
@@ -54,18 +65,22 @@ class AIPetUserInterface:
         self.update_time()
         self.root.mainloop()
     
-    def get_imu_distance(self):
+    def generate_report(self):
         distance, ack, message = imu_communication_apis.get_imu_distance()
         if not ack:
             print("App: get distance error " + message)
             return
-        distance = float(distance)
-        distance = "{:.{}f}".format(distance, 2)
-        display_string = f"Your pet has traveled {distance} meters in the past 24 hours."
+        
+        current_time = strftime('%m/%d/%Y %H:%M', localtime())
+        display_string = """Current time is {}\nIn the past 24 hours:\nYour pet has traveled {} meters\nYour pet has made loud noises for 5 times, in total 75 sec.""".format(current_time, distance)
+        
         self.text_display.config(state='normal')  # Enable editing to change the text
         self.text_display.delete(1.0, tk.END)  # Clear existing content in the text box
         self.text_display.insert(tk.END, display_string)  # Insert the new text
         self.text_display.config(state='disabled')  # Disable editing after updating
+    
+    def live_stream(self):
+        webbrowser.open("https://www.youtube.com/")
 
 
 if __name__ == "__main__":
