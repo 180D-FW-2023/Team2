@@ -25,4 +25,6 @@ def get_imu_distance():
     distance, ack_message = app_subscriber.app_collect_data()
     if distance == -1:
         return -1, False, ack_message
+    distance = float(distance)
+    distance = "{:.{}f}".format(distance, 2)
     return distance, app_publish_data_success, message
