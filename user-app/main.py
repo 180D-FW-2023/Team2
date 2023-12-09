@@ -68,6 +68,7 @@ class AIPetUserInterface:
     def generate_report(self):
         distance, ack, message = imu_communication_apis.get_imu_distance()
 
+        # TBD: audio APIs gateway
         audio_times = 0
         audio_period = 0
 
