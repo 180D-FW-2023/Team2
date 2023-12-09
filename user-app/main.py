@@ -67,12 +67,15 @@ class AIPetUserInterface:
     
     def generate_report(self):
         distance, ack, message = imu_communication_apis.get_imu_distance()
+
+        audio_times = 0
+        audio_period = 0
+
         if not ack:
             print("App: get distance error " + message)
-            return
         
         current_time = strftime('%m/%d/%Y %H:%M', localtime())
-        display_string = """Current time is {}\nIn the past 24 hours:\nYour pet has traveled {} meters\nYour pet has made loud noises for 5 times, in total 75 sec.""".format(current_time, distance)
+        display_string = """Current time is {}\nIn the past 24 hours:\nYour pet has traveled {} meters\nYour pet has made loud noises for {} times, in total {} sec.""".format(current_time, distance, audio_times, audio_period)
         
         self.text_display.config(state='normal')  # Enable editing to change the text
         self.text_display.delete(1.0, tk.END)  # Clear existing content in the text box
@@ -80,7 +83,7 @@ class AIPetUserInterface:
         self.text_display.config(state='disabled')  # Disable editing after updating
     
     def live_stream(self):
-        webbrowser.open("https://www.youtube.com/")
+        webbrowser.open("http://131.179.32.244:8081/")
 
 
 if __name__ == "__main__":
