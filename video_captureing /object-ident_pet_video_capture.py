@@ -287,8 +287,8 @@ if __name__ == "__main__":
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    frames_queue.put((None, None, None))  # 发送结束信号到线程
-    caption_thread.join()  # 等待线程结束
+    frames_queue.put((None, None, None))
+    caption_thread.join()
 
     cap.release()
     cv2.destroyAllWindows()
