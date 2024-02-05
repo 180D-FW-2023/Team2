@@ -5,6 +5,9 @@ from datetime import datetime
 from threading import Thread
 import camera_publisher
 import camera_subscriber
+import subprocess
+from cap_from_youtube import cap_from_youtube
+
 
 # Load class names
 classNames = []
@@ -247,9 +250,59 @@ class VideoStreamWidget(object):
     
 
 ################### Stay detection ###################
+    
 if __name__ == "__main__":
-    stream_link = 'http://131.179.33.111:8081/'
+
+    # stream from Youtube
+    input_url = "https://www.youtube.com/watch?v=k5rEQ2wFPUw"
+    cap = cap_from_youtube(input_url,'best')
+
+    #cap = cv2.VideoCapture(best.url)
+    #cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+    command = ['ffmpeg',
+                '-f', 'rawvideo',
+                '-pix_fmt', 'bgr24',
+                '-s','640x480',
+                '-i','-',
+                '-ar', '44100',
+                '-ac', '2',
+                '-acodec', 'pcm_s16le',
+                '-f', 's16le',
+                '-ac', '2',
+                '-i','/dev/zero',   
+                '-acodec','aac',
+                '-ab','128k',
+                '-strict','experimental',
+                '-vcodec','h264',
+                '-pix_fmt','yuv420p',
+                '-g', '50',
+                '-vb','1000k',
+                '-profile:v', 'baseline',
+                '-preset', 'ultrafast',
+                '-r', '30',
+                '-f', 'flv', 
+                'rtmp://a.rtmp.youtube.com/live2/bpug-8qbh-t98s-df6c-f8fp']
+
+    pipe = subprocess.Popen(command, stdin=subprocess.PIPE)
+
+    while True:
+        _, frame = cap.read()
+        pipe.stdin.write(frame.tostring())
+        cv2.imshow("OpenCV Stream to YouTube", frame)
+
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+
+    pipe.kill()
+    cap.release()
+
+    '''
+    stream_link = 'http://192.168.1.59/'
     video_stream_widget = VideoStreamWidget(stream_link)
+    
 
     initialize_report()
     initialize_stay_report()  # Initialize pet stay report
@@ -292,13 +345,80 @@ if __name__ == "__main__":
     video_stream_widget.capture.release()
     cv2.destroyAllWindows()
     print("Camera released and windows closed.")
-    
     '''
+    '''
+    
 
-    cap = cv2.VideoCapture("test.mp4")
-    #cap = cv2.VideoCapture(0)
+    #cap = cv2.VideoCapture("test.mp4")
+    stream_url = "rtmp://a.rtmp.youtube.com/live2/bpug-8qbh-t98s-df6c-f8fp" 
+    cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         raise ValueError("Failed to open the camera.")
+    
+    # Video properties
+    width, height = 640, 480
+    fps = 30
+        
+    # FFmpeg command
+    ffmpeg_cmd = [
+        "ffmpeg",
+        "-f", "rawvideo",
+        "-vcodec", "rawvideo",
+        "-s", "{}x{}".format(width, height),
+        "-pix_fmt", "bgr24",
+        "-r", str(fps),
+        "-i", "-",
+        "-c:v", "libx264",
+        "-pix_fmt", "yuv420p",
+        "-preset", "ultrafast",
+        "-f", "flv",
+        stream_url,
+    ]
+
+    # Open FFmpeg process
+    ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print("FFmpeg Command:", " ".join(ffmpeg_cmd))
+
+    try:
+        while True:
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+
+            # Resize frame if necessary
+            frame = cv2.resize(frame, (width, height))
+
+            # Write the frame to FFmpeg process
+            if ffmpeg_process.poll() is None:  # Check if the process is still running
+                ffmpeg_process.stdin.write(frame.tobytes())
+
+            cv2.imshow("OpenCV Stream to YouTube", frame)
+
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+
+    finally:
+        # Release resources
+        cap.release()
+        cv2.destroyAllWindows()
+        # Close stdin, stdout, and stderr
+        ffmpeg_process.stdin.close()
+        ffmpeg_process.stdout.close()
+        ffmpeg_process.stderr.close()
+
+        # Wait for the process to finish and get return code
+        return_code = ffmpeg_process.wait()
+
+        # Print FFmpeg output if there was an error
+        if return_code != 0:
+            print("FFmpeg Error Output:", ffmpeg_process.stderr.read().decode('utf-8'))
+
+    # Print the return code
+    print("FFmpeg Return Code:", return_code)
+
+    
+    
 
     cap.set(3, 640)
     cap.set(4, 480)
@@ -337,4 +457,6 @@ if __name__ == "__main__":
     cap.release()
     cv2.destroyAllWindows()
     print("Camera released and windows closed.")
+
     '''
+    
