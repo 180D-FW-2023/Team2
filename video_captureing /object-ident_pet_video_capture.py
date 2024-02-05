@@ -9,6 +9,8 @@ import extract_features
 import config
 import threading
 from queue import Queue
+import subprocess
+from cap_from_youtube import cap_from_youtube
 
 video_to_text = VideoDescriptionRealTime(config)
 model = extract_features.model_cnn_load()
@@ -219,12 +221,14 @@ def generate_caption(frames_queue, caption_queue, model, video_to_text):
         
 ################### Stay detection ###################
 if __name__ == "__main__":
+    '''
     cap = cv2.VideoCapture("test.mp4")
     if not cap.isOpened():
         raise ValueError("Failed to open the camera.")
 
     cap.set(3, 640)
     cap.set(4, 480)
+    '''
     initialize_report()
     initialize_stay_report()
     initialize_caption_report()
@@ -241,12 +245,24 @@ if __name__ == "__main__":
     caption_thread = threading.Thread(target=generate_caption, args=(frames_queue, caption_queue, model, video_to_text))
     caption_thread.start()
 
+    # stream from Youtube
+    input_url = "https://www.youtube.com/watch?v=k5rEQ2wFPUw&t=14s"
+    cap = cap_from_youtube(input_url,'best')
+
+    # streaming to Youtube
+    #cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+
+
     while True:
         new_frame_time = time.time()
 
         success, img = cap.read()
         if not success:
             raise ValueError("Failed to read frame from the camera.")
+
 
         ori_img, img_bbox, objectInfo = getObjects(img, 0.45, 0.2, objects=objects)
         pet_status, eating_time = update_pet_presence(objectInfo)
@@ -283,12 +299,13 @@ if __name__ == "__main__":
         fps_text = f"FPS: {int(fps)}"
         cv2.putText(img_bbox, fps_text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
+
         cv2.imshow("Output", img_bbox)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    frames_queue.put((None, None, None))
-    caption_thread.join()
+    frames_queue.put((None, None, None))  # 发送结束信号到线程
+    caption_thread.join()  # 等待线程结束
 
     cap.release()
     cv2.destroyAllWindows()
