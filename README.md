@@ -6,9 +6,9 @@ Video Live Streaming: run object-ident_pet.py
 ## ObjectDetection:
 Object Detection: run object-ident_pet.py
 
-## VideoCapture:
+## PhotoCapture:
 The final version of Object Detection: 
-- For environmental setup, follow the instructions on the URL:https://github.com/Shreyz-max/Video-Captioning?tab=readme-ov-file
+- For environmental setup, follow the instructions in the file named terminal saved output in ObjectDetection_camera
 - run object-ident_pet_video_capture.py
 
 ## IMU
