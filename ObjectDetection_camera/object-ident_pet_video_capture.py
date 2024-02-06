@@ -4,16 +4,37 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from collections import deque
-from videocapture import VideoDescriptionRealTime
+from transformers import VisionEncoderDecoderModel, ViTImageProcessor, AutoTokenizer
 import extract_features
 import config
 import threading
 from queue import Queue
-import subprocess
-from cap_from_youtube import cap_from_youtube
+import torch
 
-video_to_text = VideoDescriptionRealTime(config)
-model = extract_features.model_cnn_load()
+# Load image caption model
+model = VisionEncoderDecoderModel.from_pretrained("nlpconnect/vit-gpt2-image-captioning")
+feature_extractor = ViTImageProcessor.from_pretrained("nlpconnect/vit-gpt2-image-captioning")
+tokenizer = AutoTokenizer.from_pretrained("nlpconnect/vit-gpt2-image-captioning")
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
+
+# Def caption function
+max_length = 16
+num_beams = 1
+gen_kwargs = {"max_length": max_length, "num_beams": num_beams}
+def predict_caption(image):
+    # Make sure image is RGB not BGR
+
+  pixel_values = feature_extractor(images=image, return_tensors="pt").pixel_values
+  pixel_values = pixel_values.to(device)
+
+  output_ids = model.generate(pixel_values, **gen_kwargs)
+
+  preds = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
+  preds = [pred.strip() for pred in preds]
+  return preds
+
 # Load class names
 classNames = []
 classFile = "coco.names"
@@ -197,38 +218,28 @@ def update_pet_presence(objectInfo):
     
     return pet_status, eating_time
 
-def generate_caption(frames_queue, caption_queue, model, video_to_text):
+def generate_caption(frames_queue, caption_queue, predict_caption):
     while True:
-        frames, record_prev, eating_time = frames_queue.get()
-        if frames is None:  
+        cur_frame, record_prev, eating_time = frames_queue.get()
+        if cur_frame is None:  
             break
 
-        samples = np.round(np.linspace(0, len(frames) - 1, 80))
-        frames = [frames[int(sample)] for sample in samples]
-        inputs = np.zeros((len(frames), 224, 224, 3))
-        for i in range(len(frames)):
-            inputs[i] = cv2.resize(frames[i], (224, 224))
-        inputs = np.array(inputs)
-        fc_feats = model.predict(inputs)
-        fc_feats = np.array(fc_feats)
-        caption = video_to_text.greedy_search(fc_feats)
-        video_to_text.max_probability = -1
+        caption = predict_caption(cur_frame)[0]
+
         add_info_to_caption_report({
                     'Time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                     'Caption': caption,
                 })
-        caption_queue.put((caption, record_prev, eating_time))
+        caption_queue.put((caption, eating_time, eating_time))
         
 ################### Stay detection ###################
 if __name__ == "__main__":
-    '''
     cap = cv2.VideoCapture("test.mp4")
     if not cap.isOpened():
         raise ValueError("Failed to open the camera.")
 
     cap.set(3, 640)
     cap.set(4, 480)
-    '''
     initialize_report()
     initialize_stay_report()
     initialize_caption_report()
@@ -242,19 +253,8 @@ if __name__ == "__main__":
     frames_queue = Queue()
     caption_queue = Queue()
 
-    caption_thread = threading.Thread(target=generate_caption, args=(frames_queue, caption_queue, model, video_to_text))
+    caption_thread = threading.Thread(target=generate_caption, args=(frames_queue, caption_queue, predict_caption))
     caption_thread.start()
-
-    # stream from Youtube
-    input_url = "https://www.youtube.com/watch?v=k5rEQ2wFPUw&t=14s"
-    cap = cap_from_youtube(input_url,'best')
-
-    # streaming to Youtube
-    #cap = cv2.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-
-
 
     while True:
         new_frame_time = time.time()
@@ -262,7 +262,6 @@ if __name__ == "__main__":
         success, img = cap.read()
         if not success:
             raise ValueError("Failed to read frame from the camera.")
-
 
         ori_img, img_bbox, objectInfo = getObjects(img, 0.45, 0.2, objects=objects)
         pet_status, eating_time = update_pet_presence(objectInfo)
@@ -275,16 +274,15 @@ if __name__ == "__main__":
 
         record_cur = eating_time - record_prev
         if record_cur < 0 or eating_time == 0:
-            frames = []
             record_prev = 0
             caption = None
             
         if record_cur > 3:
-            frames.append(img)
 
-            if record_cur >= 30 and len(frames) >= 240:
-                frames_queue.put((frames.copy(), record_prev, eating_time))
-                frames = []
+            if record_cur >= 30:
+                cur_frame = img.copy()
+                frames_queue.put((cur_frame, record_prev, eating_time))
+                cur_frame = None
                 record_prev = eating_time
                 
         if not caption_queue.empty():
@@ -299,13 +297,12 @@ if __name__ == "__main__":
         fps_text = f"FPS: {int(fps)}"
         cv2.putText(img_bbox, fps_text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
-
         cv2.imshow("Output", img_bbox)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    frames_queue.put((None, None, None))  # 发送结束信号到线程
-    caption_thread.join()  # 等待线程结束
+    frames_queue.put((None, None, None))  
+    caption_thread.join()  
 
     cap.release()
     cv2.destroyAllWindows()
