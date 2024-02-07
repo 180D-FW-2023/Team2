@@ -10,6 +10,8 @@ import config
 import threading
 from queue import Queue
 import torch
+from cap_from_youtube import cap_from_youtube
+from vidgear.gears import CamGear
 
 # Load image caption model
 model = VisionEncoderDecoderModel.from_pretrained("nlpconnect/vit-gpt2-image-captioning")
@@ -234,7 +236,11 @@ def generate_caption(frames_queue, caption_queue, predict_caption):
         
 ################### Stay detection ###################
 if __name__ == "__main__":
-    cap = cv2.VideoCapture("test.mp4")
+
+    # stream from youtube live
+    stream = CamGear(source='https://www.youtube.com/watch?v=a2aX3RGRWSg', stream_mode = True, logging=True).start()
+
+    cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         raise ValueError("Failed to open the camera.")
 
@@ -257,11 +263,16 @@ if __name__ == "__main__":
     caption_thread.start()
 
     while True:
+        
         new_frame_time = time.time()
 
-        success, img = cap.read()
-        if not success:
-            raise ValueError("Failed to read frame from the camera.")
+        img = stream.read()
+        if img is None:
+            raise ValueError("Failed to read frame from the youtube.")
+
+        #success, img = cap.read()
+        #if not success:
+            #raise ValueError("Failed to read frame from the camera.")
 
         ori_img, img_bbox, objectInfo = getObjects(img, 0.45, 0.2, objects=objects)
         pet_status, eating_time = update_pet_presence(objectInfo)
@@ -300,6 +311,7 @@ if __name__ == "__main__":
         cv2.imshow("Output", img_bbox)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+        
 
     frames_queue.put((None, None, None))  
     caption_thread.join()  
