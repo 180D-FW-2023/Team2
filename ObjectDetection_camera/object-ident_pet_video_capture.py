@@ -12,6 +12,7 @@ from queue import Queue
 import torch
 from cap_from_youtube import cap_from_youtube
 from vidgear.gears import CamGear
+from openai import OpenAI
 
 # Load image caption model
 model = VisionEncoderDecoderModel.from_pretrained("nlpconnect/vit-gpt2-image-captioning")
@@ -239,6 +240,18 @@ if __name__ == "__main__":
 
     # stream from youtube live
     stream = CamGear(source='https://www.youtube.com/watch?v=a2aX3RGRWSg', stream_mode = True, logging=True).start()
+
+    # chatgpt output
+    client = OpenAI()
+    completion = client.chat.completions.create(
+    model="gpt-3.5-turbo",
+    messages=[
+        {"role": "system", "content": "You are a poetic assistant, skilled in explaining complex programming concepts with creative flair."},
+        {"role": "user", "content": "Compose a poem that explains the concept of recursion in programming."}
+    ]
+    )
+
+    print(completion.choices[0].message)
 
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
