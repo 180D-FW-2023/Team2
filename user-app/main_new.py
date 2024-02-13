@@ -13,6 +13,7 @@ from PIL import Image, ImageTk
 import webbrowser
 from time import strftime, localtime
 from IMU import trajectory_generation
+import os
 
 
 class App(ttk.Frame):
@@ -64,11 +65,19 @@ class App(ttk.Frame):
         # Change the image when the button is clicked
         trajectory_generation.generate_trajectory()
 
-        self.image_path = "../IMU/plotting_test/pet_movement.png"  # Replace with your new image path
+        # fetch report
+        report = "Today, the cat has been observed doing the following activities: \n \
+1. At 12:34:26, the cat was seen laying on a blanket on a chair. \n \
+2. At 12:34:55, the cat was spotted eating from a bowl of food in the kitchen. \n \
+3. At 12:35:25, the cat was observed eating from a bowl on the floor."
+        self.test_label_2.config(text = report, font=("-size", 12, "-weight", "bold"))
+
+        self.image_path = "pet_movement.png"  # Replace with your new image path
         pil_image = Image.open(self.image_path)
         tk_image = ImageTk.PhotoImage(pil_image)
-        self.test_label_1.configure(image=tk_image)
+        self.test_label_1.configure(image=tk_image, justify="center")
         self.test_label_1.image = tk_image  # Keep a reference to avoid garbage collection
+        os.remove("pet_movement.png")
 
 
     def setup_widgets(self):
@@ -173,6 +182,7 @@ class App(ttk.Frame):
             text=" Welcome to AIPet!",
             justify="center",
             font=("-size", 50, "-weight", "bold"),
+            wraplength=800
         )
         self.test_label_2.grid(row=0, column=0, pady=10, columnspan=2)
 
