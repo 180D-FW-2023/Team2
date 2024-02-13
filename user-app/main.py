@@ -11,6 +11,10 @@ class AIPetUserInterface:
     default_display_string = "Welcome to AIPet!"  # Your initial string content
     def __init__(self):
         self.root = tk.Tk()
+
+        self.root.tk.call("source", "azure.tcl")
+        self.root.tk.call("set_theme", "light")
+
         self.root.title("AIPet Monitor")
 
         # communication protocols initialize
