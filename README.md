@@ -6,6 +6,11 @@ Video Live Streaming: run object-ident_pet.py
 ## ObjectDetection:
 Object Detection: run object-ident_pet.py
 
+## PhotoCapture:
+The final version of Object Detection: 
+- For environmental setup, follow the instructions in the file named terminal saved output in ObjectDetection_camera
+- run object-ident_pet_video_capture.py
+
 ## IMU
 ### Directory Structure:
 - \_\_init\_\_.py: python package indicator
