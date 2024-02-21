@@ -14,12 +14,10 @@ The final version of Object Detection:
 ## IMU
 ### Directory Structure:
 - \_\_init\_\_.py: python package indicator
-- app_publisher.py: user application MQTT publisher functions (TBD: refactor to user-app) 
-- app_subscriber.py: user application MQTT subscriber functions (TBD: refactor to user-app) 
-- berryIMU-measure-G.py: IMU distance data processing logic
-- imu_communication_api.py: communication with IMU api gateway
-- imu_publisher.py: IMU MQTT publisher functions 
-- imu_subscriber.py: IMU MQTT subscriber functions 
+- /plotting_test: testing files for IMU fusion algorithm
+- calibrateBerrtIMU.py: calibration script for berry IMU, not neccessary but will improve accuracy
+- plotIMU.py: IMU script for collecting IMU data and store them in a .csv file
+- trajectory_generation.py: a function for generating trajectory data using IMU fusion
 
 ### Bootstrap process
 Follow the instruction on: https://github.com/ozzmaker/BerryIMU. 
