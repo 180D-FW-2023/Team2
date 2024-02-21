@@ -21,7 +21,7 @@ def generate_trajectory():
         csv_content = StringIO(response.text)
     else:
         print(f"Failed to download CSV file. Status code: {response.status_code}")
-        exit(0)
+        csv_content = "../IMU/plotting_test/pet_movement.csv"
 
     # Import sensor data 
     data = numpy.genfromtxt(csv_content, delimiter=",", skip_header=1)
