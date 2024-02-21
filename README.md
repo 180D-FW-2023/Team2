@@ -3,7 +3,10 @@ AIPet: automated smart pet monitor
 ## Camera:
 - Install livestream packages by running:
   ```pip install -r requirements.txt```
-- Video Live Streaming: run livestream.py
+- Video Live Streaming: ```python livestream.py```
+
+## Microphone
+
 
 ## PhotoCapture:
 The final version of Object Detection: 
