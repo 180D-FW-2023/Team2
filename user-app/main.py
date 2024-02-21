@@ -12,7 +12,9 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 import webbrowser
 from time import strftime, localtime
+from datetime import date
 from IMU import trajectory_generation
+from ObjectDetection_camera.gptsummarization import generate_summary
 import os
 
 
@@ -63,22 +65,27 @@ class App(ttk.Frame):
 
     def fetch_report(self):
         # Change the image when the button is clicked
-        trajectory_generation.generate_trajectory()
+        #trajectory_generation.generate_trajectory()
+
+        print("button clicked")
+
+        # get today's date
+        today_date = str(date.today())
 
         # fetch report
-        report = "Today, the cat has been observed doing the following activities: \n \
-1. At 12:34:26, the cat was seen laying on a blanket on a chair. \n \
-2. At 12:34:55, the cat was spotted eating from a bowl of food in the kitchen. \n \
-3. At 12:35:25, the cat was observed eating from a bowl on the floor."
+        report_csv_path = '../ObjectDetection_camera/pet_video_captin_report_'+ today_date + '.csv'
+        report = generate_summary(report_csv_path)
+        print(report)
         self.test_label_2.config(text = report, font=("-size", 12, "-weight", "bold"))
 
+        
         self.image_path = "pet_movement.png"  # Replace with your new image path
         pil_image = Image.open(self.image_path)
         tk_image = ImageTk.PhotoImage(pil_image)
         self.test_label_1.configure(image=tk_image, justify="center")
         self.test_label_1.image = tk_image  # Keep a reference to avoid garbage collection
         os.remove("pet_movement.png")
-
+        
 
     def setup_widgets(self):
         # Create a Frame for the titless
