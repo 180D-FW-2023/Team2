@@ -7,24 +7,24 @@ import numpy
 import requests
 from io import StringIO
 
-RASPBERRY_PI_IP = "192.168.137.14"  # Replace with the actual IP address of your Raspberry Pi
-CSV_FILE_URL = f"http://{RASPBERRY_PI_IP}:8000/pet_movement.csv"
-response = requests.get(CSV_FILE_URL)
+# RASPBERRY_PI_IP = "192.168.137.14"  # Replace with the actual IP address of your Raspberry Pi
+# CSV_FILE_URL = f"http://{RASPBERRY_PI_IP}:8000/pet_movement.csv"
+# response = requests.get(CSV_FILE_URL)
 
-csv_content = None
-if response.status_code == 200:
-    # Use numpy to parse the CSV content
-    csv_content = StringIO(response.text)
-else:
-    print(f"Failed to download CSV file. Status code: {response.status_code}")
-    exit(0)
+# csv_content = None
+# if response.status_code == 200:
+#     # Use numpy to parse the CSV content
+#     csv_content = StringIO(response.text)
+# else:
+#     print(f"Failed to download CSV file. Status code: {response.status_code}")
+#     exit(0)
 
-# Import sensor data ("short_walk.csv" or "long_walk.csv")
-data = numpy.genfromtxt(csv_content, delimiter=",", skip_header=1)
+# # Import sensor data ("short_walk.csv" or "long_walk.csv")
+# data = numpy.genfromtxt(csv_content, delimiter=",", skip_header=1)
 
-#data = numpy.genfromtxt("pet_movement.csv", delimiter=",", skip_header=1)
+data = numpy.genfromtxt("pet_movement.csv", delimiter=",", skip_header=1)
 
-sample_rate = 100  # 400 Hz
+sample_rate = 10  # 400 Hz
 
 timestamp = data[:, 0]
 gyroscope = data[:, 1:4]

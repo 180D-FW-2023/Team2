@@ -30,9 +30,9 @@ import threading
 RAD_TO_DEG = 57.29578
 M_PI = 3.14159265358979323846
 G_GAIN = 0.070          # [deg/s/LSB]  If you change the dps for gyro, you need to update this value accordingly
-ACC_LPF_FACTOR = 0.4    # Low pass filter constant magnetometer
-GYR_LPF_FACTOR = 0.4   # Low pass filter constant for accelerometer
-MAG_LPF_FACTOR = 0.4
+ACC_LPF_FACTOR = 0.6    # Low pass filter constant magnetometer
+GYR_LPF_FACTOR = 0.6   # Low pass filter constant for accelerometer
+MAG_LPF_FACTOR = 0.6
 ACC_MEDIANTABLESIZE = 9         # Median filter table size for accelerometer. Higher = smoother but a longer delay
 GYR_MEDIANTABLESIZE = 9         # Median filter table size for magnetometer. Higher = smoother but a longer 
 MAG_MEDIANTABLESIZE = 9
@@ -89,12 +89,29 @@ mag_medianTable2Z = [1] * MAG_MEDIANTABLESIZE
 
 PORT = 8000
 
+SAVE_FREQ = 30.0
+REMOVE_FREQ = 600.0
+save_times = 1
+
 # Function to serve the CSV file
 def serve_csv():
     Handler = http.server.SimpleHTTPRequestHandler
     with socketserver.TCPServer(("", PORT), Handler) as httpd:
         print("Serving at port", PORT)
         httpd.serve_forever()
+
+def save_to_csv():
+    with open(csv_file_name, 'a') as csvfile:
+        # creating a csv writer object
+        csvwriter = csv.writer(csvfile)
+        # writing the data rows
+        csvwriter.writerows(csv_content)
+        print("file saved!")
+
+with open(csv_file_name, 'w') as csvfile:
+    # creating a csv writer object
+    csvwriter = csv.writer(csvfile)
+    csvwriter.writerow(csv_fields)
 
 
 IMU.detectIMU()     #Detect if BerryIMU is connected.
@@ -256,21 +273,21 @@ while True:
     csv_content.append(csv_row)
     #print(f"Current time: {curr_time}, xG: {xG}, yG: {yG}, zG: {zG}, GyrX: {rate_gyr_x}, GyrY: {rate_gyr_y}, GyrZ: {rate_gyr_z}")
 
-    #slow program down a bit, makes the output more readable
-    #time.sleep(0.01)
+    #down sampling
+    time.sleep(0.09)
 
-    if (curr_time >= 30.0):
-        print("Breaking loop")
-        break
-
-with open(csv_file_name, 'w') as csvfile:
-    # creating a csv writer object
-    csvwriter = csv.writer(csvfile)
-    # writing the fields
-    csvwriter.writerow(csv_fields)
-    # writing the data rows
-    csvwriter.writerows(csv_content)
-    print("file saved!")
+    if (curr_time >= (SAVE_FREQ * save_times)):
+        save_times+=1
+        print("Print to csv")
+        save_to_csv()
+        csv_content = []
+    
+    if (curr_time >= REMOVE_FREQ):
+        # os.remove("pet_movement.csv")
+        print("Sampled Stop")
+        while True:
+            pass
+        sys.exit(0)
 
 while True:
     pass

@@ -28,31 +28,12 @@ def generate_trajectory():
 
     # data = numpy.genfromtxt("../IMU/plotting_test/pet_movement.csv", delimiter=",", skip_header=1)
 
-    sample_rate = 100  # 400 Hz
+    sample_rate = 10  # 10 Hz
 
     timestamp = data[:, 0]
     gyroscope = data[:, 1:4]
     accelerometer = data[:, 4:7]
     magnetometer = data[:, 7:10]
-
-    # Plot sensor data
-    figure, axes = pyplot.subplots(nrows=6, sharex=True, gridspec_kw={"height_ratios": [6, 6, 6, 2, 1, 1]})
-
-    figure.suptitle("Sensors data, Euler angles, and AHRS internal states")
-
-    axes[0].plot(timestamp, gyroscope[:, 0], "tab:red", label="Gyroscope X")
-    axes[0].plot(timestamp, gyroscope[:, 1], "tab:green", label="Gyroscope Y")
-    axes[0].plot(timestamp, gyroscope[:, 2], "tab:blue", label="Gyroscope Z")
-    axes[0].set_ylabel("Degrees/s")
-    axes[0].grid()
-    axes[0].legend()
-
-    axes[1].plot(timestamp, accelerometer[:, 0], "tab:red", label="Accelerometer X")
-    axes[1].plot(timestamp, accelerometer[:, 1], "tab:green", label="Accelerometer Y")
-    axes[1].plot(timestamp, accelerometer[:, 2], "tab:blue", label="Accelerometer Z")
-    axes[1].set_ylabel("g")
-    axes[1].grid()
-    axes[1].legend()
 
     # Instantiate AHRS algorithms
     offset = imufusion.Offset(sample_rate)
@@ -87,42 +68,6 @@ def generate_trajectory():
 
         acceleration[index] = 9.81 * ahrs.earth_acceleration  # convert g to m/s/s
 
-    # Plot Euler angles
-    axes[2].plot(timestamp, euler[:, 0], "tab:red", label="Roll")
-    axes[2].plot(timestamp, euler[:, 1], "tab:green", label="Pitch")
-    axes[2].plot(timestamp, euler[:, 2], "tab:blue", label="Yaw")
-    axes[2].set_ylabel("Degrees")
-    axes[2].grid()
-    axes[2].legend()
-
-    # Plot internal states
-    axes[3].plot(timestamp, internal_states[:, 0], "tab:olive", label="Acceleration error")
-    axes[3].set_ylabel("Degrees")
-    axes[3].grid()
-    axes[3].legend()
-
-    axes[4].plot(timestamp, internal_states[:, 1], "tab:cyan", label="Accelerometer ignored")
-    pyplot.sca(axes[4])
-    pyplot.yticks([0, 1], ["False", "True"])
-    axes[4].grid()
-    axes[4].legend()
-
-    axes[5].plot(timestamp, internal_states[:, 2], "tab:orange", label="Acceleration recovery trigger")
-    axes[5].set_xlabel("Seconds")
-    axes[5].grid()
-    axes[5].legend()
-
-    # Plot acceleration
-    _, axes = pyplot.subplots(nrows=4, sharex=True, gridspec_kw={"height_ratios": [6, 1, 6, 6]})
-
-    axes[0].plot(timestamp, acceleration[:, 0], "tab:red", label="X")
-    axes[0].plot(timestamp, acceleration[:, 1], "tab:green", label="Y")
-    axes[0].plot(timestamp, acceleration[:, 2], "tab:blue", label="Z")
-    axes[0].set_title("Acceleration")
-    axes[0].set_ylabel("m/s/s")
-    axes[0].grid()
-    axes[0].legend()
-
     # Identify moving periods
     is_moving = numpy.empty(len(timestamp))
 
@@ -136,13 +81,6 @@ def generate_trajectory():
 
     for index in range(len(timestamp) - 1, margin, -1):
         is_moving[index] = any(is_moving[(index - margin):index])  # add trailing margin
-
-    # Plot moving periods
-    axes[1].plot(timestamp, is_moving, "tab:cyan", label="Is moving")
-    pyplot.sca(axes[1])
-    pyplot.yticks([0, 1], ["False", "True"])
-    axes[1].grid()
-    axes[1].legend()
 
     # Calculate velocity (includes integral drift)
     velocity = numpy.zeros((len(timestamp), 3))
@@ -195,30 +133,11 @@ def generate_trajectory():
 
     velocity = velocity - velocity_drift
 
-    # Plot velocity
-    axes[2].plot(timestamp, velocity[:, 0], "tab:red", label="X")
-    axes[2].plot(timestamp, velocity[:, 1], "tab:green", label="Y")
-    axes[2].plot(timestamp, velocity[:, 2], "tab:blue", label="Z")
-    axes[2].set_title("Velocity")
-    axes[2].set_ylabel("m/s")
-    axes[2].grid()
-    axes[2].legend()
-
     # Calculate position
     position = numpy.zeros((len(timestamp), 3))
 
     for index in range(len(timestamp)):
         position[index] = position[index - 1] + delta_time[index] * velocity[index]
-
-    # Plot position
-    axes[3].plot(timestamp, position[:, 0], "tab:red", label="X")
-    axes[3].plot(timestamp, position[:, 1], "tab:green", label="Y")
-    axes[3].plot(timestamp, position[:, 2], "tab:blue", label="Z")
-    axes[3].set_title("Position")
-    axes[3].set_xlabel("Seconds")
-    axes[3].set_ylabel("m")
-    axes[3].grid()
-    axes[3].legend()
 
     # Print error as distance between start and final positions
     print("Error: " + "{:.3f}".format(numpy.sqrt(position[-1].dot(position[-1]))) + " m")
@@ -238,6 +157,11 @@ def generate_trajectory():
         y = position[:portion, 1]
         z = position[:portion, 2]
 
+        axes.set_xticks([])
+        axes.set_yticks([])
+        axes.set_zticks([])
+
         scatter = axes.scatter(x, y, x)
         figure.savefig("pet_movement.png", dpi=50)
+        pyplot.close(figure)
 
