@@ -1,7 +1,3 @@
-import cv2
-import pandas as pd
-from datetime import datetime
-from threading import Thread
 import subprocess
 
 
