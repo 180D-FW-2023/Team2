@@ -65,9 +65,7 @@ class App(ttk.Frame):
 
     def fetch_report(self):
         # Change the image when the button is clicked
-        #trajectory_generation.generate_trajectory()
-
-        print("button clicked")
+        trajectory_generation.generate_trajectory()
 
         # get today's date
         today_date = str(date.today())
@@ -77,7 +75,6 @@ class App(ttk.Frame):
         report = generate_summary(report_csv_path)
         print(report)
         self.test_label_2.config(text = report, font=("-size", 12, "-weight", "bold"))
-
         
         self.image_path = "pet_movement.png"  # Replace with your new image path
         pil_image = Image.open(self.image_path)
@@ -85,7 +82,7 @@ class App(ttk.Frame):
         self.test_label_1.configure(image=tk_image, justify="center")
         self.test_label_1.image = tk_image  # Keep a reference to avoid garbage collection
         os.remove("pet_movement.png")
-        
+
 
     def setup_widgets(self):
         # Create a Frame for the titless
