@@ -239,20 +239,9 @@ def generate_caption(frames_queue, caption_queue, predict_caption):
 if __name__ == "__main__":
 
     # stream from youtube live
-    stream = CamGear(source='https://www.youtube.com/watch?v=a2aX3RGRWSg', stream_mode = True, logging=True).start()
+    stream = CamGear(source='https://www.youtube.com/watch?v=cjAXTJJg0pE', stream_mode = True, logging=True).start()
 
-    # chatgpt output
-    client = OpenAI()
-    completion = client.chat.completions.create(
-    model="gpt-3.5-turbo",
-    messages=[
-        {"role": "system", "content": "You are a poetic assistant, skilled in explaining complex programming concepts with creative flair."},
-        {"role": "user", "content": "Compose a poem that explains the concept of recursion in programming."}
-    ]
-    )
-
-    print(completion.choices[0].message)
-
+    # stream from local camera
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         raise ValueError("Failed to open the camera.")
@@ -279,10 +268,12 @@ if __name__ == "__main__":
         
         new_frame_time = time.time()
 
+        # streaming with livestream
         img = stream.read()
         if img is None:
             raise ValueError("Failed to read frame from the youtube.")
 
+        # streaming with local camera
         #success, img = cap.read()
         #if not success:
             #raise ValueError("Failed to read frame from the camera.")
