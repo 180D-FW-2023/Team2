@@ -37,5 +37,3 @@ def generate_summary(csv_path):
   )
 
   return response.choices[0].message.content
-
-print(generate_summary("pet_video_captin_report_2024-02-03.csv"))
