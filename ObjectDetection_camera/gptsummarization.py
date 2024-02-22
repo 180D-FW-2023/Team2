@@ -1,6 +1,6 @@
 from openai import OpenAI
 from datetime import date
-
+import os
 import csv
 
 
@@ -15,8 +15,9 @@ def generate_summary(csv_path):
           #print(', '.join(row))
 
   # opencv request
+  key = os.environ["OPENAI_API_KEY"]
 
-  client = OpenAI(api_key="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")
+  client = OpenAI(api_key=key)
 
   response = client.chat.completions.create(
     model="gpt-3.5-turbo",
@@ -37,3 +38,4 @@ def generate_summary(csv_path):
 
   return response.choices[0].message.content
 
+print(generate_summary("pet_video_captin_report_2024-02-03.csv"))

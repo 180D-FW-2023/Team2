@@ -6,3 +6,6 @@ ffmpeg
 tensorflow
 torch
 pillow
+openai
+datetime
+os
