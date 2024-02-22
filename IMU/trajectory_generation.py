@@ -13,10 +13,18 @@ CSV_FILE_URL = f"http://{RASPBERRY_PI_IP}:8000/pet_movement.csv"
 
 
 def generate_trajectory():
-    response = requests.get(CSV_FILE_URL)
-
     csv_content = None
-    if response.status_code == 200:
+    response = None
+    try:
+        response = requests.get(CSV_FILE_URL, timeout=5)
+    except requests.exceptions.Timeout:
+        csv_content = "../IMU/plotting_test/pet_movement.csv"
+    except requests.exceptions.ConnectionError:
+        csv_content = "../IMU/plotting_test/pet_movement.csv"
+
+    if response is None:
+        csv_content = "../IMU/plotting_test/pet_movement.csv"
+    elif response.status_code == 200:
         # Use numpy to parse the CSV content
         csv_content = StringIO(response.text)
     else:
