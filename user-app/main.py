@@ -16,6 +16,8 @@ from datetime import date
 from IMU import trajectory_generation
 from ObjectDetection_camera.gptsummarization import generate_summary
 import os
+import sys
+import subprocess
 
 
 class App(ttk.Frame):
@@ -61,7 +63,10 @@ class App(ttk.Frame):
     
     def live_stream(self):
         if self.var_4.get() == "Main Camera":
-            webbrowser.open("www.YouTube.com/channel/UClrdoCQ1tNfZ6PFgktlCGLw/live")
+            print("main camera")
+            #webbrowser.open("https://www.YouTube.com/channel/UClrdoCQ1tNfZ6PFgktlCGLw/live",new=2)
+            subprocess.run("open 'https://www.YouTube.com/channel/UClrdoCQ1tNfZ6PFgktlCGLw/live'",shell=True)
+            #sys.Diagnostics.Process.Start("https://www.YouTube.com/channel/UClrdoCQ1tNfZ6PFgktlCGLw/live")
 
     def fetch_report(self):
         # Change the image when the button is clicked
@@ -76,12 +81,14 @@ class App(ttk.Frame):
         print(report)
         self.test_label_2.config(text = report, font=("-size", 12, "-weight", "bold"))
         
+        
         self.image_path = "pet_movement.png"  # Replace with your new image path
         pil_image = Image.open(self.image_path)
         tk_image = ImageTk.PhotoImage(pil_image)
         self.test_label_1.configure(image=tk_image, justify="center")
         self.test_label_1.image = tk_image  # Keep a reference to avoid garbage collection
         os.remove("pet_movement.png")
+        
 
 
     def setup_widgets(self):
