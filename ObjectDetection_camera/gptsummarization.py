@@ -24,7 +24,7 @@ def generate_summary(csv_path):
     messages=[
       {
         "role": "system",
-        "content": "Summarize content you are provided with in specific time and date in a list. If repetitive movement, merge interval"
+        "content": "Can you give a warm, summarized and concise report for pet owners, telling them the main activities of the pets throughout the day, in 5-10 bullet points and tone it down. Please do not give specific time."
       },
       {
         "role": "user",
@@ -37,3 +37,5 @@ def generate_summary(csv_path):
   )
 
   return response.choices[0].message.content
+
+print(generate_summary("pet_video_captin_report_2024-02-27.csv"))

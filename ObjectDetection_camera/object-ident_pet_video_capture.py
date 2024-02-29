@@ -10,9 +10,6 @@ import config
 import threading
 from queue import Queue
 import torch
-from cap_from_youtube import cap_from_youtube
-from vidgear.gears import CamGear
-from openai import OpenAI
 
 # Load image caption model
 model = VisionEncoderDecoderModel.from_pretrained("nlpconnect/vit-gpt2-image-captioning")
@@ -149,77 +146,46 @@ pet_presence = {} # This is for tracking
 recent_consistent_detections = {pet: 0 for pet in pets} # Handle the pet's sudden change with a buffer to account for detection instability
 consistent_stay_detections = {pet: {obj: 0 for obj in item_objects} for pet in pets} # Same, but for stay detection
 
+
 def update_pet_presence(objectInfo):
     current_time = time.time()
     detected_pets = [className for _, className in objectInfo if className in pets]
-    detected_objects = [objName for _, objName in objectInfo if objName in item_objects]
-    pet_status = {}
-    eating_time = 0
-    # Detect eating
+    pet_status = {}  # Tracks the status of each pet in the frame
+    eating_time = 0  # Placeholder for eating time calculation
+
     for pet in pets:
         is_pet_detected = pet in detected_pets
-        is_pet_tracked = pet in pet_presence
-
         if is_pet_detected:
-            # If detect pet, counting frame add 1
-            recent_consistent_detections[pet] += 1
-            
-            # Consisitent thershold: 20
-            if recent_consistent_detections[pet] < 20:
-                continue
-            
-            # Reset other pet situation
-            for other_pet in pets:
-                if other_pet != pet:
-                    recent_consistent_detections[other_pet] = 0
-                    
-            if not is_pet_tracked:
-                # Reset consistent countings if it's not detected 
-                recent_consistent_detections[pet] = 0
-                
-                # Initialize pet presence for newly detected pets
-                pet_presence[pet] = {'first_seen': current_time, 'last_seen': current_time, 'buffer': 0}
+            if pet not in pet_presence:
+                # Initialize pet presence and reported flag
+                pet_presence[pet] = {'first_seen': current_time, 'last_seen': current_time, 'buffer': 0, 'reported': False}
                 pet_status[pet] = 'Entered'
             else:
-                # Update pet presence for already detected pets
+                # Update last seen time
                 pet_presence[pet]['last_seen'] = current_time
-                pet_presence[pet]['buffer'] = 0
+                # Calculate eating time if needed
+                eating_time = current_time - pet_presence[pet]['first_seen']
+                pet_status[pet] = 'Detected'
+            
+            if not pet_presence[pet]['reported']:
+                # Report logic here
+                pet_presence[pet]['reported'] = True
+                # Update the report only once
+                # For example, you can call add_info_to_report here
+                pet_status[pet] = f'Reported for {int(eating_time)} seconds'
 
-            # If the pet has been detected long enough to be recorded
-            eating_time = current_time - pet_presence[pet]['first_seen']
-            pet_status[pet] = f'Detected for {int(eating_time)} seconds | Recorded' if eating_time > 30 else f'Detected for {int(eating_time)} seconds'
-
-        elif is_pet_tracked:
-            # Handle the pet's disappearance with a buffer to account for detection instability
-            if pet_presence[pet]['buffer'] < 20:
-                pet_presence[pet]['buffer'] += 1
-            else:
-                # Record and report pet's total presence time
-                elapsed_time = current_time - pet_presence[pet]['first_seen']
-                if elapsed_time > 30:
-                    add_info_to_report({
-                        'Time Entered': datetime.fromtimestamp(pet_presence[pet]['first_seen']).strftime('%Y-%m-%d %H:%M:%S'),
-                        'Time Left': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        'Event': f'{pet} stayed for {int(elapsed_time)} seconds'
-                    })
+        elif pet in pet_presence:
+            # Increase buffer if pet is currently tracked but not detected
+            pet_presence[pet]['buffer'] += 1
+            if pet_presence[pet]['buffer'] >= 20:
+                # Pet considered as left after 20 frames of absence
                 del pet_presence[pet]
                 pet_status[pet] = 'Left'
-                
-    # Detect staying                
-    for pet in detected_pets:
-        for objName in detected_objects:
-            consistent_stay_detections[pet][objName] += 1
-            if consistent_stay_detections[pet][objName] < 20:
-                continue
-            # update_pet_stay_time
-            pet_stay_time[pet][objName] += time.time() - current_time
-            for other_obj in item_objects:
-                if other_obj != objName:
-                    consistent_stay_detections[pet][other_obj] = 0
 
-    update_stay_report()
-    
+    # Ensure the function returns values for pet_status and eating_time
     return pet_status, eating_time
+
+
 
 def generate_caption(frames_queue, caption_queue, predict_caption):
     while True:
@@ -237,11 +203,6 @@ def generate_caption(frames_queue, caption_queue, predict_caption):
         
 ################### Stay detection ###################
 if __name__ == "__main__":
-
-    # stream from youtube live
-    stream = CamGear(source='https://www.youtube.com/watch?v=cjAXTJJg0pE', stream_mode = True, logging=True).start()
-
-    # stream from local camera
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         raise ValueError("Failed to open the camera.")
@@ -265,18 +226,11 @@ if __name__ == "__main__":
     caption_thread.start()
 
     while True:
-        
         new_frame_time = time.time()
 
-        # streaming with livestream
-        img = stream.read()
-        if img is None:
-            raise ValueError("Failed to read frame from the youtube.")
-
-        # streaming with local camera
-        #success, img = cap.read()
-        #if not success:
-            #raise ValueError("Failed to read frame from the camera.")
+        success, img = cap.read()
+        if not success:
+            raise ValueError("Failed to read frame from the camera.")
 
         ori_img, img_bbox, objectInfo = getObjects(img, 0.45, 0.2, objects=objects)
         pet_status, eating_time = update_pet_presence(objectInfo)
@@ -315,7 +269,6 @@ if __name__ == "__main__":
         cv2.imshow("Output", img_bbox)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-        
 
     frames_queue.put((None, None, None))  
     caption_thread.join()  
