@@ -16,9 +16,13 @@ from datetime import date
 from IMU import trajectory_generation
 from ObjectDetection_camera.gptsummarization import generate_summary
 import os
-import sys
-import subprocess
+import requests
+import urllib.parse
 
+BASE = 'https://mini.s-shot.ru/1920x1080/PNG/1920/Z100/?' # you can modify size, format, zoom
+url = 'https://www.youtube.com/embed/8XhbDcxkLLI' #or whatever link you need
+url = urllib.parse.quote_plus(url) #service needs link to be joined in encoded format
+path = 'streaming_screenshot.PNG'
 
 class App(ttk.Frame):
     def __init__(self, parent):
@@ -32,7 +36,7 @@ class App(ttk.Frame):
             self.rowconfigure(index=index, weight=1)
 
         # Create value lists
-        self.option_menu_list = ["", "Live Streaming", "Main Camera", "Side Camera"]
+        self.option_menu_list = ["", "Live Streaming Options", "Main Camera", "Side Camera"]
         self.combo_list = ["Combobox", "Editable item 1", "Editable item 2"]
         self.readonly_combo_list = ["Readonly combobox", "Item 1", "Item 2"]
 
@@ -63,10 +67,7 @@ class App(ttk.Frame):
     
     def live_stream(self):
         if self.var_4.get() == "Main Camera":
-            if (os.name == 'nt'):
-                webbrowser.open("https://www.YouTube.com/channel/UClrdoCQ1tNfZ6PFgktlCGLw/live",new=2)
-            else:
-                subprocess.run("open 'https://www.YouTube.com/channel/UClrdoCQ1tNfZ6PFgktlCGLw/live'",shell=True)
+            webbrowser.open("www.YouTube.com/channel/UClrdoCQ1tNfZ6PFgktlCGLw/live")
 
     def fetch_report(self):
         # Change the image when the button is clicked
@@ -78,24 +79,38 @@ class App(ttk.Frame):
         # fetch report
         report_csv_path = '../ObjectDetection_camera/pet_video_captin_report_'+ today_date + '.csv'
         report = generate_summary(report_csv_path)
-        print(report)
+        # print(report)
         self.test_label_2.config(text = report, font=("-size", 12, "-weight", "bold"))
-        
         
         self.image_path = "pet_movement.png"  # Replace with your new image path
         pil_image = Image.open(self.image_path)
+        pil_image = pil_image.resize((400, 400))
         tk_image = ImageTk.PhotoImage(pil_image)
-        self.test_label_1.configure(image=tk_image, justify="center")
-        self.test_label_1.image = tk_image  # Keep a reference to avoid garbage collection
-        os.remove("pet_movement.png")
-        
+        self.trajectory_label.configure(image=tk_image, justify="center")
+        self.trajectory_label.image = tk_image  # Keep a reference to avoid garbage collection
+        #os.remove("pet_movement.png")
 
+        # fetch screenshots from livestreaming
+        # response = requests.get(BASE + url, stream=True)
+
+        # if response.status_code == 200:
+        #     with open(path, 'wb') as file:
+        #         for chunk in response:
+        #             file.write(chunk)
+
+        # self.screenshot_path = path
+        # pil_screenshot = Image.open(self.screenshot_path)
+        # pil_screenshot = pil_screenshot.resize((400, 225))
+        # tk_screenshot = ImageTk.PhotoImage(pil_screenshot)
+        # self.screenshot_label.configure(image=tk_screenshot, justify="center")
+        # self.screenshot_label.image = tk_screenshot # Keep a reference to avoid garbage collection
+        # os.remove("streaming_screenshot.PNG")
 
     def setup_widgets(self):
         # Create a Frame for the titless
         self.title_frame = ttk.LabelFrame(self, text="Welcome!", padding=(20, 10))
         self.title_frame.grid(
-            row=0, column=0, padx=(20, 10), pady=(20, 10), sticky="nsew"
+            row=1, column=0, padx=(20, 10), pady=(20, 10), sticky="nsew"
         )
 
         # Titles and times
@@ -113,11 +128,11 @@ class App(ttk.Frame):
         
         # Separator
         self.separator = ttk.Separator(self)
-        self.separator.grid(row=1, column=0, padx=(20, 10), pady=10, sticky="ew")
+        self.separator.grid(row=2, column=0, padx=(20, 10), pady=10, sticky="ew")
 
         # Create a Frame for the Themes changing
         self.theme_frame = ttk.LabelFrame(self, text="Themes", padding=(20, 10))
-        self.theme_frame.grid(row=2, column=0, padx=(20, 10), pady=10, sticky="nsew")
+        self.theme_frame.grid(row=3, column=0, padx=(20, 10), pady=10, sticky="nsew")
 
         # Radiobuttons for themes
         self.theme_radio_1 = ttk.Radiobutton(
@@ -134,7 +149,7 @@ class App(ttk.Frame):
         # Create a Frame for input widgets
         self.widgets_frame = ttk.Frame(self, padding=(0, 0, 0, 10))
         self.widgets_frame.grid(
-            row=0, column=1, padx=10, pady=(30, 10), sticky="nsew", rowspan=3
+            row=0, column=0, padx=20, pady=(30, 0), sticky="nsew", columnspan=3
         )
         self.widgets_frame.columnconfigure(index=0, weight=1)
 
@@ -144,49 +159,66 @@ class App(ttk.Frame):
         
         # Generate Report Button
         self.generate_report_button = ttk.Button(self.widgets_frame, text="Generate Report", command=self.fetch_report)
-        self.generate_report_button.grid(row=1, column=0, padx=5, pady=10, sticky="nsew")
+        self.generate_report_button.grid(row=0, column=1, padx=5, pady=10, sticky="nsew")
 
         # OptionMenu
         self.live_streaming_optionmenu = ttk.OptionMenu(
             self.widgets_frame, self.var_4, *self.option_menu_list
         )
-        self.live_streaming_optionmenu.grid(row=2, column=0, padx=5, pady=10, sticky="nsew")
+        self.live_streaming_optionmenu.grid(row=0, column=2, padx=5, pady=10, sticky="nsew")
 
         # open live streaming
         self.open_live_streaming_button = ttk.Button(self.widgets_frame, text="Open Live Streaming", command=self.live_stream)
-        self.open_live_streaming_button.grid(row=3, column=0, padx=5, pady=10, sticky="nsew")
+        self.open_live_streaming_button.grid(row=0, column=3, padx=5, pady=10, sticky="nsew")
 
         # Disable notification
         self.switch = ttk.Checkbutton(
             self.widgets_frame, text="Disable Notification", style="Switch.TCheckbutton"
         )
-        self.switch.grid(row=4, column=0, padx=5, pady=10, sticky="nsew")
+        self.switch.grid(row=0, column=4, padx=5, pady=10, sticky="nsew")
 
-        # Trajectory display frame
-        self.trajectory_display_frame = ttk.LabelFrame(self, text="Trajectory Plot", padding=(20, 10))
-        self.trajectory_display_frame.grid(row=0, column=2, padx=(20, 10), pady=(20, 10), sticky="nsew")
+        # Image frame
+        self.image_frame = ttk.LabelFrame(self, text="Trajectory Plot", padding=(20, 10))
+        self.image_frame.grid(row=1, column=2, padx=(20, 10), pady=(20, 10), sticky="nsew")
 
-        # Load an image using PIL
-        self.image_path = "../IMU/plotting_test/default2.png"  # Replace with your image path
-        pil_image = Image.open(self.image_path)
-        tk_image = ImageTk.PhotoImage(pil_image)
+        # Trajectory
+        self.trajectory_image_path = "../IMU/plotting_test/default2_re.png"  # Replace with your image path
+        pil_trajectory_image = Image.open(self.trajectory_image_path)
+        tk_trajectory_image = ImageTk.PhotoImage(pil_trajectory_image)
 
-        self.test_label_1 = ttk.Label(
-            self.trajectory_display_frame,
+        self.trajectory_label = ttk.Label(
+            self.image_frame,
             justify="center",
             font=("-size", 50, "-weight", "bold"),
-            image=tk_image
+            image=tk_trajectory_image
         )
-        self.test_label_1.image = tk_image
-        self.test_label_1.grid(row=0, column=0, pady=10, columnspan=2, sticky="nsew")
+        self.trajectory_label.image = tk_trajectory_image
+        self.trajectory_label.grid(row=0, column=0, pady=10, columnspan=2, sticky="nsew")
+
+        # Image frame 2
+        # self.image_frame_2 = ttk.LabelFrame(self, text="Screenshots", padding=(20, 10))
+        # self.image_frame_2.grid(row=1, column=3, padx=(20, 10), pady=(20, 10), sticky="nsew")
+        # # Screenshot
+        # self.screenshot_image_path = "../IMU/plotting_test/default_3_re.png"  # Replace with your image path
+        # pil_screenshot_image = Image.open(self.screenshot_image_path)
+        # tk_screenshot_image = ImageTk.PhotoImage(pil_screenshot_image)
+
+        # self.screenshot_label = ttk.Label(
+        #     self.image_frame_2,
+        #     justify="center",
+        #     font=("-size", 50, "-weight", "bold"),
+        #     image=tk_screenshot_image
+        # )
+        # self.screenshot_label.image = tk_screenshot_image
+        # self.screenshot_label.grid(row=0, column=1, pady=10, columnspan=2, sticky="nsew")
 
         # Separator
         self.separator_2 = ttk.Separator(self)
-        self.separator_2.grid(row=1, column=2, padx=(20, 10), pady=10, sticky="ew")
+        self.separator_2.grid(row=2, column=2, padx=(20, 10), pady=10, sticky="ew", columnspan=2)
 
         # Report frame
         self.report_frame = ttk.LabelFrame(self, text="Report", padding=(20, 10))
-        self.report_frame.grid(row=2, column=2, padx=(20, 10), pady=(20, 10), sticky="nsew")
+        self.report_frame.grid(row=3, column=2, padx=(20, 10), pady=(20, 10), sticky="nsew", columnspan=2, rowspan=4)
 
         self.test_label_2 = ttk.Label(
             self.report_frame,
@@ -195,7 +227,7 @@ class App(ttk.Frame):
             font=("-size", 50, "-weight", "bold"),
             wraplength=800
         )
-        self.test_label_2.grid(row=0, column=0, pady=10, columnspan=2)
+        self.test_label_2.grid(row=0, column=0, pady=10, columnspan=2, rowspan=4)
 
 
 
