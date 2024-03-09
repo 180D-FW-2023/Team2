@@ -18,6 +18,7 @@ from ObjectDetection_camera.gptsummarization import generate_summary
 import os
 import sys
 import subprocess
+import numpy as np
 
 
 class App(ttk.Frame):
@@ -67,10 +68,26 @@ class App(ttk.Frame):
                 webbrowser.open("https://www.YouTube.com/channel/UClrdoCQ1tNfZ6PFgktlCGLw/live",new=2)
             else:
                 subprocess.run("open 'https://www.YouTube.com/channel/UClrdoCQ1tNfZ6PFgktlCGLw/live'",shell=True)
+    
+    def total_distance(self, position):
+        portion = int(position.shape[0] * 0.8)
+
+        x = position[:portion, 0]
+        y = position[:portion, 1]
+        z = position[:portion, 2]
+
+        x_dis = np.sum(np.abs(np.diff(x)))
+        y_dis = np.sum(np.abs(np.diff(y)))
+        z_dis = np.sum(np.abs(np.diff(z)))
+
+        return int(np.sqrt(x_dis**2 + y_dis**2 + z_dis**2))
+
 
     def fetch_report(self):
         # Change the image when the button is clicked
-        trajectory_generation.generate_trajectory()
+        position = trajectory_generation.generate_trajectory()
+        distance = self.total_distance(position)
+        distance_string = "\nThe pet has traveled " + str(distance) + "m today"
 
         # get today's date
         today_date = str(date.today())
@@ -78,12 +95,15 @@ class App(ttk.Frame):
         # fetch report
         report_csv_path = '../ObjectDetection_camera/pet_video_captin_report_'+ today_date + '.csv'
         report = generate_summary(report_csv_path)
+        report += distance_string
         print(report)
         self.test_label_2.config(text = report, font=("-size", 12, "-weight", "bold"))
         
         
         self.image_path = "pet_movement.png"  # Replace with your new image path
         pil_image = Image.open(self.image_path)
+        pil_image = pil_image.resize((500, 500))
+        pil_image = pil_image.crop((50, 20, 480, 450))
         tk_image = ImageTk.PhotoImage(pil_image)
         self.test_label_1.configure(image=tk_image, justify="center")
         self.test_label_1.image = tk_image  # Keep a reference to avoid garbage collection
