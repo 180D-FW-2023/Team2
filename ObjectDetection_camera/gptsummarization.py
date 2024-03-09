@@ -15,7 +15,8 @@ def generate_summary(csv_path):
           #print(', '.join(row))
 
   # opencv request
-  key = os.environ["OPENAI_API_KEY"]
+  key = os.getenv('OPENAI_API_KEY')
+  # key = os.environ["OPENAI_API_KEY"]
 
   client = OpenAI(api_key=key)
 

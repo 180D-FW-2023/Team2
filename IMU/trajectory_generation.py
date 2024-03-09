@@ -16,7 +16,7 @@ def generate_trajectory():
     csv_content = None
     response = None
     try:
-        response = requests.get(CSV_FILE_URL, timeout=5)
+        response = requests.get(CSV_FILE_URL, timeout=3)
     except requests.exceptions.Timeout:
         csv_content = "../IMU/plotting_test/pet_movement.csv"
     except requests.exceptions.ConnectionError:
@@ -170,6 +170,6 @@ def generate_trajectory():
         axes.set_zticks([])
 
         scatter = axes.scatter(x, y, x)
-        figure.savefig("pet_movement.png", dpi=50)
+        figure.savefig("pet_movement.png", dpi=100)
         pyplot.close(figure)
 
