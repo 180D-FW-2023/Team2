@@ -6,7 +6,8 @@ AIPet: automated smart pet monitor
 - Video Live Streaming: ```python livestream.py```
 
 ## Microphone
-
+- Input the email address that the user wished to be notified: ```nano sound.py```
+- Run ```python sound.py```
 
 ## PhotoCapture:
 The final version of Object Detection: 
