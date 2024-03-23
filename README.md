@@ -12,6 +12,9 @@ AIPet: automated smart pet monitor
 - ml-audio-classifier-example-for-pico-dog_barks_2.tar.gz: Zip-file containing the training data used during Transfer Learning of the dog audio classifier 
 - sent.py: Enable sending Gmail using the SMTP server
 - sound.py: Notify the user once received signals from Raspberry Pi Pico suggesting that there is continuous dog bark in the board environment
+- Decision: Due to the lack of Wi-Fi module on Raspberry Pi Pico, we decided to integrate Raspberry Pi Zero to enable email notifications
+- Bugs: The fine-tune model currently has an accuracy evaluation of 88%, there might still be some specific types of dog barks that it is not able to detect due to the limitation of training data. During testing, it showed that it detects dog bark audio better than real-time dog bark, this can be due to the audio being played near the microphone while a dog can bark at a distance away from the microphone
+- Future improvements: Feed more real data into the ML model for further optimization
 
 ### Bootstrap process:
 - If you wish to train the ML model, download the dog_audio_classifier.ipynb and open it on Google Colab and run through each cell. Before the Inference Application, open up the file explorer UI pane located on the left-hand side of the Google Colab interface. Locate inference-app/src/main.cpp and replace it with the main.cpp file from the SoundDetection repository. Finish running all the cells. (Hardware: Raspberry Pi Pico)
