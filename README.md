@@ -15,7 +15,7 @@ AIPet: automated smart pet monitor
 
 ### Bootstrap process:
 - If you wish to train the ML model, download the dog_audio_classifier.ipynb and open it on Google Colab and run through each cell. Before the Inference Application, open up the file explorer UI pane located on the left-hand side of the Google Colab interface. Locate inference-app/src/main.cpp and replace it with the main.cpp file from the SoundDetection repository. Finish running all the cells. (Hardware: Raspberry Pi Pico)
-- Change the email to the address you wish to be notified in sound.py line 25 , run ```nano sound.py``` (Hardware: Raspberry Pi Zero)
+- Change the email to the address you wish to be notified in sound.py line 25 , run ```nano SoundDetection/sound.py``` (Hardware: Raspberry Pi Zero)
 - In the project directory, run ```python SoundDetection/sound.py``` (Hardware: Raspberry Pi Zero)
 
 ## PhotoCapture:
