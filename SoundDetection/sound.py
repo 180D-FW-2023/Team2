@@ -19,12 +19,12 @@ GPIO.setup(channel, GPIO.IN)
 def callback(channel):
         global count, last_bark_time
         count += 1
-        if (count > 3):
-                print( "Your dog is barking!")
-                #kuanghongchang@outlook.com
+        if (count > 10):
+                print( "Email sent!")
+                #Put in your email address below ex: kuanghongchang@outlook.com
                 send_simple_email("zhenbruin20@g.ucla.edu","Woof","Your dog is barking, you might want to check out the live stream?")
-                last_bark_time = datetime.now()
-                append_list_as_row('bark_file.csv', [last_bark_time])
+                #last_bark_time = datetime.now()
+                #append_list_as_row('bark_file.csv', [last_bark_time])
                 count = 0
         #if GPIO.input(channel):
                 #print( "Your dog barked!")
